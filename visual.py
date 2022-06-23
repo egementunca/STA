@@ -67,7 +67,7 @@ Ayij=average(yij)
 Axij=average(xij)
 
 ##FIGURES
-fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(16,9), dpi=120)
+fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True)
 
 axs[0].plot(s, Aopx)
 axs[0].set_ylabel(r'$q_{\sigma_x}$')
@@ -79,7 +79,7 @@ axs[2].plot(s, Aopz)
 axs[2].set_ylabel(r'$q_{\sigma_z}$')
 axs[2].set_xlabel(r'$t\tau}$')
 
-fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(16,9), dpi=120)
+fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True)
 
 axs[0].plot(s, Ax)
 axs[0].set_ylabel(r'$<\sigma_x>$')
@@ -91,7 +91,7 @@ axs[2].plot(s, Az)
 axs[2].set_ylabel(r'$<\sigma_z>$')
 axs[2].set_xlabel(r'$t\tau}$')
 
-fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(16,9), dpi=120)
+fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True)
 
 axs[0].plot(s, Axij)
 axs[0].set_ylabel(r'$<\sigma^i_x\sigma^j_x>$')
@@ -132,4 +132,3 @@ axs[2].set_xlabel(r'$<\sigma^i_z\sigma^j_z>$')
 plt.show()
 
 
-	

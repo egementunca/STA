@@ -1,6 +1,7 @@
 import numpy as np
-from numpy import kron, trace
+from numpy import einsum
 from scipy.linalg import expm
+import numba as nb
 
 def GibbsV4(beta, H):
 	rho = expm(-beta*H) / trace(expm(-beta*H))
@@ -22,6 +23,10 @@ def PolyDrivingV4(Tau, t, wi, wf):
 	dw = ( (30*wfi*((t/Tau)**2)) - (60*wfi*((t/Tau)**3)) + (30*wfi*((t/Tau)**4)) )/Tau
 	return w, dw
 
+trace = lambda a: np.einsum('ii', a)
+kron = lambda a, b: np.einsum('ij,kl -> ikjl', a, b).reshape(a.shape[0]*b.shape[0],a.shape[0]*b.shape[0])
+matmul = lambda a, b: np.einsum('ij,jk', a, b)
+elementwise = lambda a, b : np.einsum('i,i->i', a, b)
 
 #CONSTANTS
 hbar = 1
@@ -62,44 +67,49 @@ yij = np.zeros((Dp1,Dp2,Dp3,Lt),dtype=np.complex128)
 xij = np.zeros((Dp1,Dp2,Dp3,Lt))
 
 
-f1 = lambda rho, op: (1/3) * ( (trace(rho @ kron(kron(op,I),I))**2) + (trace(rho @ kron(kron(I,I),op))**2) + (trace(rho @ kron(kron(I,op),I))**2))
-f2 = lambda rho, op: (1/3) * ( (trace(rho @ kron(kron(op,I),I))) + (trace(rho @ kron(kron(I,I),op))) + (trace(rho @ kron(kron(I,op),I))))
-f3 = lambda rho, op: (1/3) * ( (trace(rho @ kron(kron(op,op),I))) + (trace(rho @ kron(kron(op,I),op))) + (trace(rho @ kron(kron(I,op),op))))
 
+f1 = lambda rho, op: (1/3) * ( (trace(matmul(rho,kron(kron(op,I),I)))**2) + (trace(matmul(rho,kron(kron(I,I),op)))**2) + (trace(matmul(rho,kron(kron(I,op),I)))**2))
+f2 = lambda rho, op: (1/3) * ( (trace(matmul(rho,kron(kron(op,I),I)))) + (trace(matmul(rho,kron(kron(I,I),op)))) + (trace(matmul(rho,kron(kron(I,op),I)))))
+f3 = lambda rho, op: (1/3) * ( (trace(matmul(rho,kron(kron(op,op),I)))) + (trace(matmul(rho,kron(kron(op,I),op)))) + (trace(matmul(rho,kron(kron(I,op),op)))))
+
+nb.njit(parallel=True)
 def main():
-	for p1 in range(0,Dp1):
+
+	h0, h2 = 0, 1
+	H1 = np.linspace(0,.9,10)
+	h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
+	j_pool = np.random.uniform(low=-1.0, high=1.0, size=(100,3))
+
+	mj = -1* np.array([
+					  [1,0,0],
+					  [0,1,0],
+					  [0,0,1],
+					  [1,1,0],
+					  [0,1,1],
+					  [1,0,1]])
+
+	for p1,h1 in enumerate(H1):
 		for p2 in range(0,Dp2):
-			for p3 in range(0,Dp3):
-				
-				j = np.random.uniform(low=-1.0, high=1.0, size=(1,3))
-				h0, h1, h2 = 0, 0.1*p1, 1
-				h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
-	
-				mj = -1* np.array([
-					[1,0,0],
-					[0,1,0],
-					[0,0,1],
-					[1,1,0],
-					[0,1,1],
-					[1,0,1]])
-	
+			for p3,j in enumerate(j_pool):
+
+				j = j.reshape(1,3)
 				jj = j.conj().T + ((mj[p2,:] * j).conj().T @ h)
-	
+
 				for i in range(0,Lt):
-					
+
 					H0f= jj[0,i]*kron(kron(sz,sz),I)+jj[1,i]*kron(I,kron(sz,sz))+jj[2,i]*kron(kron(sz,I),sz)+ h1*sx3
 					rho = GibbsV4(beta, H0f)
-					
+
 					opz[p1,p2,p3,i] = f1(rho,sz)
 					opy[p1,p2,p3,i] = f1(rho,sy)
 					opx[p1,p2,p3,i] = f1(rho,sx)
-	
-					
+
+
 					z[p1,p2,p3,i]= f2(rho,sz)
 					y[p1,p2,p3,i]=f2(rho,sy)
 					x[p1,p2,p3,i]=f2(rho,sx)
-	
-					
+
+
 					zij[p1,p2,p3,i]=f3(rho,sz)
 					yij[p1,p2,p3,i]=f3(rho,sy)
 					xij[p1,p2,p3,i]=f3(rho,sx)
@@ -118,7 +128,7 @@ def analyze_speed():
 
 	stats = pstats.Stats(pr)
 	stats.sort_stats(pstats.SortKey.TIME)
-	stats.dump_stats(filename='test.prof')
+	stats.dump_stats(filename='test3.prof')
 
 	return True
 
