@@ -24,7 +24,7 @@ def PolyDrivingV4(Tau, t, wi, wf):
 	return w, dw
 
 trace = lambda a: np.einsum('ii', a)
-kron = lambda a, b: np.einsum('ij,kl -> ikjl', a, b).reshape(a.shape[0]*b.shape[0],a.shape[0]*b.shape[0])
+kron = lambda a, b: np.einsum('ij,kl -> ikjl', a, b).reshape(a.shape[0]*b.shape[0],a.shape[1]*b.shape[1])
 matmul = lambda a, b: np.einsum('ij,jk', a, b)
 elementwise = lambda a, b : np.einsum('i,i->i', a, b)
 
@@ -78,7 +78,7 @@ def main():
 	h0, h2 = 0, 1
 	H1 = np.linspace(0,.9,10)
 	h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
-	j_pool = np.random.uniform(low=-1.0, high=1.0, size=(100,3))
+	j_pool = np.random.normal(loc=0, scale=1, size=(100,1,3))
 
 	mj = -1* np.array([
 					  [1,0,0],
@@ -92,7 +92,6 @@ def main():
 		for p2 in range(0,Dp2):
 			for p3,j in enumerate(j_pool):
 
-				j = j.reshape(1,3)
 				jj = j.conj().T + ((mj[p2,:] * j).conj().T @ h)
 
 				for i in range(0,Lt):
@@ -128,7 +127,7 @@ def analyze_speed():
 
 	stats = pstats.Stats(pr)
 	stats.sort_stats(pstats.SortKey.TIME)
-	stats.dump_stats(filename='test3.prof')
+	stats.dump_stats(filename='test.prof')
 
 	return True
 
