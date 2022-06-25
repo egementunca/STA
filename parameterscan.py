@@ -53,18 +53,17 @@ I = np.eye(2)
 
 sx3 = kron(kron(sx,I),I) + kron(kron(I,I),sx) + kron(kron(I,sx),I)
 
-H0f = np.zeros((Ds,Ds,Lt))
-opz = np.zeros((Dp1,Dp2,Dp3,Lt))
-opy = np.zeros((Dp1,Dp2,Dp3,Lt),dtype=np.complex128)
-opx = np.zeros((Dp1,Dp2,Dp3,Lt))
+opz = np.zeros((Dp1,Dp2*Dp3,Lt))
+opy = np.zeros((Dp1,Dp2*Dp3,Lt),dtype=np.complex128)
+opx = np.zeros((Dp1,Dp2*Dp3,Lt))
 
-z = np.zeros((Dp1,Dp2,Dp3,Lt))
-y = np.zeros((Dp1,Dp2,Dp3,Lt),dtype=np.complex128)
-x = np.zeros((Dp1,Dp2,Dp3,Lt))
+z = np.zeros((Dp1,Dp2*Dp3,Lt))
+y = np.zeros((Dp1,Dp2*Dp3,Lt),dtype=np.complex128)
+x = np.zeros((Dp1,Dp2*Dp3,Lt))
 
-zij = np.zeros((Dp1,Dp2,Dp3,Lt))
-yij = np.zeros((Dp1,Dp2,Dp3,Lt),dtype=np.complex128)
-xij = np.zeros((Dp1,Dp2,Dp3,Lt))
+zij = np.zeros((Dp1,Dp2*Dp3,Lt))
+yij = np.zeros((Dp1,Dp2*Dp3,Lt),dtype=np.complex128)
+xij = np.zeros((Dp1,Dp2*Dp3,Lt))
 
 
 
@@ -72,48 +71,55 @@ f1 = lambda rho, op: (1/3) * ( (trace(matmul(rho,kron(kron(op,I),I)))**2) + (tra
 f2 = lambda rho, op: (1/3) * ( (trace(matmul(rho,kron(kron(op,I),I)))) + (trace(matmul(rho,kron(kron(I,I),op)))) + (trace(matmul(rho,kron(kron(I,op),I)))))
 f3 = lambda rho, op: (1/3) * ( (trace(matmul(rho,kron(kron(op,op),I)))) + (trace(matmul(rho,kron(kron(op,I),op)))) + (trace(matmul(rho,kron(kron(I,op),op)))))
 
+def realizationCreator(q,j_pool):
+	for i in range(600):
+		for t  in range(100):
+			q[:,:,i,t] += j_pool[i//6].conj().T
+	return q
+
+h0, h2 = 0, 1
+H1 = np.linspace(0.1,1.0,10)
+h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
+
+mj = -1* np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[0,1,1],[1,0,1]])
+
+j_pool = np.random.normal(loc=0, scale=.5, size=(Dp3,1,3))
+
+r = np.array([mj * j for j in j_pool]).reshape(Dp2*Dp3,1,3)
+q = np.array([r]).conj().T @ h
+realizations = realizationCreator(q,j_pool)
+
 nb.njit(parallel=True)
 def main():
 
-	h0, h2 = 0, 1
-	H1 = np.linspace(0,.9,10)
-	h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
-	j_pool = np.random.normal(loc=0, scale=1, size=(100,1,3))
-
-	mj = -1* np.array([
-					  [1,0,0],
-					  [0,1,0],
-					  [0,0,1],
-					  [1,1,0],
-					  [0,1,1],
-					  [1,0,1]])
+	jh_ratio = np.zeros(Dp1*Dp2*Dp3*Lt).reshape(Dp1,Dp2*Dp3,Lt)
 
 	for p1,h1 in enumerate(H1):
-		for p2 in range(0,Dp2):
-			for p3,j in enumerate(j_pool):
+		for p2 in range(0,Dp2*Dp3):
+			for i in range(0,Lt):
 
-				jj = j.conj().T + ((mj[p2,:] * j).conj().T @ h)
+				j = realizations[:,0,p2,i]
+				jh_ratio[p1,p2,i] = j.mean()/h1
 
-				for i in range(0,Lt):
+				H0f= j[0]*kron(kron(sz,sz),I)+j[1]*kron(I,kron(sz,sz))+j[2]*kron(kron(sz,I),sz)+ h1*sx3
+				rho = GibbsV4(beta, H0f)
 
-					H0f= jj[0,i]*kron(kron(sz,sz),I)+jj[1,i]*kron(I,kron(sz,sz))+jj[2,i]*kron(kron(sz,I),sz)+ h1*sx3
-					rho = GibbsV4(beta, H0f)
-
-					opz[p1,p2,p3,i] = f1(rho,sz)
-					opy[p1,p2,p3,i] = f1(rho,sy)
-					opx[p1,p2,p3,i] = f1(rho,sx)
-
-
-					z[p1,p2,p3,i]= f2(rho,sz)
-					y[p1,p2,p3,i]=f2(rho,sy)
-					x[p1,p2,p3,i]=f2(rho,sx)
+				opz[p1,p2,i] = f1(rho,sz)
+				opy[p1,p2,i] = f1(rho,sy)
+				opx[p1,p2,i] = f1(rho,sx)
 
 
-					zij[p1,p2,p3,i]=f3(rho,sz)
-					yij[p1,p2,p3,i]=f3(rho,sy)
-					xij[p1,p2,p3,i]=f3(rho,sx)
+				z[p1,p2,i]= f2(rho,sz)
+				y[p1,p2,i]=f2(rho,sy)
+				x[p1,p2,i]=f2(rho,sx)
 
-	np.savez('data.npz', opx=opx,opy=opy,opz=opz, x=x, y=y, z=z, xij=xij, yij=yij, zij=zij)
+
+				zij[p1,p2,i]=f3(rho,sz)
+				yij[p1,p2,i]=f3(rho,sy)
+				xij[p1,p2,i]=f3(rho,sx)
+		
+
+	np.savez('data.npz', jh=jh_ratio, opx=opx,opy=opy,opz=opz, x=x, y=y, z=z, xij=xij, yij=yij, zij=zij)
 
 	return True
 
@@ -130,5 +136,3 @@ def analyze_speed():
 	stats.dump_stats(filename='test.prof')
 
 	return True
-
-analyze_speed()
