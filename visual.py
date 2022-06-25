@@ -1,16 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-#opz = np.load('opz.npy')
-#opy = np.load('opy.npy')
-#opx = np.load('opx.npy')
-#z   = np.load('z.npy')
-#x   = np.load('x.npy')
-#y   = np.load('y.npy')
-#zij = np.load('zij.npy')
-#xij = np.load('xij.npy')
-#yij = np.load('yij.npy')
-
 data = np.load('data.npz')
 
 opz = data['opz']
@@ -27,7 +17,6 @@ Dp1 = 10
 Dp2 = 6
 Dp3 = 100
 
-
 def TimeVecV4(T_0, dt, Tau):
 
 	t = np.arange(T_0,Tau,dt)
@@ -36,7 +25,6 @@ def TimeVecV4(T_0, dt, Tau):
 	Lt = len(t)
 
 	return t, s, St, Lt
-
 
 #Time Params
 dt = 1e-2
@@ -50,7 +38,7 @@ def average(a):
 	size = np.shape(opz)[-1]
 	x = np.zeros(size)
 	for i in range(size):
-		x[i] = np.sum(a[:,:,:,i])/(Dp1*Dp2*Dp3)
+		x[i] = np.sum(a[:,:,i])/(Dp1*Dp2*Dp3)
 	return x
 
 
@@ -77,7 +65,7 @@ axs[1].set_ylabel(r'$q_{\sigma_y}$')
 
 axs[2].plot(s, Aopz)
 axs[2].set_ylabel(r'$q_{\sigma_z}$')
-axs[2].set_xlabel(r'$t\tau}$')
+axs[2].set_xlabel(r'$t/\tau}$')
 
 fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True)
 
@@ -89,7 +77,7 @@ axs[1].set_ylabel(r'$<\sigma_y>$')
 
 axs[2].plot(s, Az)
 axs[2].set_ylabel(r'$<\sigma_z>$')
-axs[2].set_xlabel(r'$t\tau}$')
+axs[2].set_xlabel(r'$t/\tau}$')
 
 fig, axs = plt.subplots(nrows=3, ncols=1, sharex=True)
 
@@ -101,7 +89,7 @@ axs[1].set_ylabel(r'$<\sigma^i_y\sigma^j_y>$')
 
 axs[2].plot(s, Azij)
 axs[2].set_ylabel(r'$<\sigma^i_z\sigma^j_z>$')
-axs[2].set_xlabel(r'$t\tau}$')
+axs[2].set_xlabel(r'$t/\tau}$')
 
 plt.show()
 
