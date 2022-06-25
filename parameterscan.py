@@ -77,22 +77,22 @@ def realizationCreator(q,j_pool):
 			q[:,:,i,t] += j_pool[i//6].conj().T
 	return q
 
-h0, h2 = 0, 1
-H1 = np.linspace(0.1,1.0,10)
-h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
-
-mj = -1* np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[0,1,1],[1,0,1]])
-
-j_pool = np.random.normal(loc=0, scale=.5, size=(Dp3,1,3))
-
-r = np.array([mj * j for j in j_pool]).reshape(Dp2*Dp3,1,3)
-q = np.array([r]).conj().T @ h
-realizations = realizationCreator(q,j_pool)
-
 nb.njit(parallel=True)
 def main():
 
 	jh_ratio = np.zeros(Dp1*Dp2*Dp3*Lt).reshape(Dp1,Dp2*Dp3,Lt)
+
+	h0, h2 = 0, 1
+	H1 = np.linspace(0.1,1.0,10)
+	h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
+	
+	mj = -1* np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[0,1,1],[1,0,1]])
+	
+	j_pool = np.random.normal(loc=0, scale=.5, size=(Dp3,1,3))
+	
+	r = np.array([mj * j for j in j_pool]).reshape(Dp2*Dp3,1,3)
+	q = np.array([r]).conj().T @ h
+	realizations = realizationCreator(q,j_pool)
 
 	for p1,h1 in enumerate(H1):
 		for p2 in range(0,Dp2*Dp3):
@@ -136,3 +136,5 @@ def analyze_speed():
 	stats.dump_stats(filename='test.prof')
 
 	return True
+
+analyze_speed()
