@@ -152,5 +152,3 @@ def analyze_speed():
 	stats.dump_stats(filename='test0.prof')
 
 	return True
-
-main()

@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-#data = np.load('data_eig_method.npz')#mixed realizations dp3:100, first excited state
-data = np.load('test_data_eig_method.npz') # given realizations dp3:2, first excited state
+plt.style.use('ggplot')
+
+data = np.load('data_eig_method.npz')#mixed realizations dp3:100, first excited state
+#data = np.load('test_data_eig_method.npz') # given realizations dp3:2, first excited state
 #data = np.load('test_data.npz') #given realization dp3:2, gibbs
 #data = np.load('data.npz')# mixed realizations dp3:100, gibbs
 
@@ -20,7 +22,7 @@ yij = data['yij']
 
 Dp1 = 10
 Dp2 = 6 #NUMBER OF POSSIBLE FLIPS
-Dp3 = 2 #SIZE OF J POOL
+Dp3 = 100 #SIZE OF J POOL
 		#DP2 * DP3 : NUMBER OF REALIZATIONS 
 
 def TimeVecV4(T_0, dt, Tau):
@@ -109,7 +111,6 @@ def show():
 	axs[1,2].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 	plt.suptitle('Average of {} Realizations'.format(Dp2*Dp3))
 	plt.show()
-
 
 def old_show():
 	##FIGURES
