@@ -36,12 +36,12 @@ Ds = 8
 T = 10
 kb = 1
 beta = 1/(kb*T)
-Dp1 = 10
+Dp1 = 4
 Dp2 = 6
-Dp3 = 2
+Dp3 = 1000
 
 #Time Params
-dt = 1e-2
+dt = 2e-3
 Tau = 1
 T_0 = 0
 t,s,St,Lt = TimeVecV4(T_0, dt, Tau)
@@ -83,14 +83,14 @@ def realizationCreator(q,j_pool):
 	return q
 
 h0, h2 = 0, 1
-H1 = np.linspace(0.1,1.0,10)
+H1 = np.array([0.1, 0.5, 1.0, 2.0])
 h = [PolyDrivingV4(Tau, t, h0, h2)[0]]
 	
 mj = -2* np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[0,1,1],[1,0,1]])
 	
 #can be problematic since gaussian dist is not bounded
-#j_pool = np.random.normal(loc=0, scale=1/3, size=(Dp3,1,3))
-j_pool = np.array([[1,1,1],[1,1,-1]]).reshape(Dp3,1,3)
+j_pool = np.random.normal(loc=0, scale=1/3, size=(Dp3,1,3))
+#j_pool = np.array([[1,1,1],[1,1,-1]]).reshape(Dp3,1,3)
 	
 r = np.array([mj * j for j in j_pool]).reshape(Dp2*Dp3,1,3)
 q = np.array([r]).conj().T @ h
@@ -135,7 +135,7 @@ def main():
 				xij[p1,p2,i] = f3_eig(psi,sx)
 		
 
-	np.savez('data_eig_method.npz', realizations=realizations, jh=jh_ratio, opx=opx,opy=opy,opz=opz, x=x, y=y, z=z, xij=xij, yij=yij, zij=zij)
+	np.savez('big_data.npz', realizations=realizations, jh=jh_ratio, opx=opx,opy=opy,opz=opz, x=x, y=y, z=z, xij=xij, yij=yij, zij=zij)
 
 	return True
 
